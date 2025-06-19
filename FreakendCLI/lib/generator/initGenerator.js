@@ -21,6 +21,12 @@ function generateInitNodeExpress(targetDir) {
     createDir(path.join(targetDir, 'routes'));
     createDir(path.join(targetDir, 'controllers'));
     createDir(path.join(targetDir, 'models'));
+    createDir(path.join(targetDir, 'utils'));
+    createDir(path.join(targetDir, 'middleware'));
+    createDir(path.join(targetDir, 'services'));
+    createDir(path.join(targetDir, 'docs'));
+
+
 
     // Create files
     writeFile(path.join(targetDir, 'server.js'), `
