@@ -16,6 +16,10 @@ const navigation = [
     href: "/docs/cli-reference",
   },
   {
+    title: "Bulk Add",
+    href: "/docs/Bulk-commands-tables",
+  },
+  {
     title: "Commands",
     items: [
       { title: "frx add login", href: "/docs/login" },
@@ -56,7 +60,10 @@ const navigation = [
     title: "Contributing",
     href: "/docs/contributing",
   },
-
+  {
+    title: "Readme",
+    href: "/docs/Read-me",
+  },
   {
     title: "Roadmap",
     href: "/docs/roadmap",
