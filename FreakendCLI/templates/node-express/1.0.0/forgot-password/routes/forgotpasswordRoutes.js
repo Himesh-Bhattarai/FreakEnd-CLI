@@ -1,5 +1,20 @@
-// forgotpasswordRoutes.js - Auto generated
+const express = require('express');
+const authController = require('../../controllers/auth.controller');
+const authValidation = require('../../validations/auth.validation');
+const validate = require('../../middlewares/validate');
 
-module.exports = function() {
-    // TODO: Implement forgotpasswordRoutes.js functionality
-};
+const router = express.Router();
+
+router.post(
+  '/forgot-password',
+  validate(authValidation.forgotPassword),
+  authController.forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  validate(authValidation.resetPassword),
+  authController.resetPassword
+);
+
+module.exports = router;
