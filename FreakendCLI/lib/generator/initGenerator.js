@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { createFile } = require('fs-extra');
 
 function createDir(targetPath) {
     if (!fs.existsSync(targetPath)) {
@@ -26,19 +27,17 @@ function generateInitNodeExpress(targetDir) {
     createDir(path.join(targetDir, 'services'));
     createDir(path.join(targetDir, 'docs'));
 
-
-
     // Create files
     writeFile(path.join(targetDir, 'server.js'), `
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const loginRoutes = require('./routes/login');
+
 
 dotenv.config();
 const app = express();
 app.use(express.json());
-app.use('/login', loginRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -46,54 +45,57 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
     .catch(err => console.error(err));
 `);
 
-    writeFile(path.join(targetDir, '.env'), 'MONGO_URI=your-mongo-uri-here');
+    writeFile(path.join(targetDir, '.env'), 'MONGO_URI=your-mongo-uri-here  // Replace with your actual MongoDB URI\nPORT=5000\n');
 
     writeFile(path.join(targetDir, 'config', 'db.js'), `
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('MongoDB connected');
+        await mongoose.connect(process.env.MONGO_URI || " ", { // Use your MongoDB URI here
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+            socketTimeoutMS: 4500000 // Close sockets after 45m of inactivity
+        });
+        console.log('MongoDB connected successfully');
     } catch (err) {
-        console.error(err.message);
-        process.exit(1);
+        console.error('MongoDB connection error:', err.message);
+        process.exit(1); // Exit process with failure
     }
 };
+
+// Handle connection events
+mongoose.connection.on('connected', () => {
+    console.log('Mongoose connected to DB');
+});
+
+mongoose.connection.on('error', (err) => {
+    console.error('Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('Mongoose disconnected from DB');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    await mongoose.connection.close();
+    console.log('Mongoose connection closed due to app termination');
+    process.exit(0);
+});
 
 module.exports = connectDB;
 `);
 
-    writeFile(path.join(targetDir, 'routes', 'login.js'), `
-const express = require('express');
-const router = express.Router();
-const { loginUser } = require('../controllers/loginController');
+    // writeFile(path.join(targetDir, 'routes'))
+    // writeFile(path.join(targetDir, 'controllers'))
+    // writeFile(path.join(targetDir, 'models'))
 
-router.post('/', loginUser);
-
-module.exports = router;
-`);
-
-    writeFile(path.join(targetDir, 'controllers', 'loginController.js'), `
-exports.loginUser = (req, res) => {
-    res.send('Login logic here');
-};
-`);
-
-    writeFile(path.join(targetDir, 'models', 'userModel.js'), `
-const mongoose = require('mongoose');
-
-const UserSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-});
-
-module.exports = mongoose.model('User', UserSchema);
-`);
-
-    console.log('Installing dependencies...');
-    execSync('npm init -y && npm install express mongoose dotenv', { cwd: targetDir, stdio: 'inherit' });
-    console.log('Project ready. Run with: node server.js');
+    console.log('Installing dependencies...')
+    execSync('npm init -y && npm install express mongoose dotenv', { cwd: targetDir, stdio: 'inherit' })
+    console.log('Project ready. Run with: node server.js')
 }
 
 module.exports = generateInitNodeExpress;

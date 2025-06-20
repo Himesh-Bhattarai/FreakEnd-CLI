@@ -1,5 +1,5 @@
-const User = require('../models/User');
-const { generateTokens } = require('../services/token.service');
+const User = require('../models/User.model');
+const { generateTokens } = require('../services/jwt.token.service');
 
 // Signup Controller
 exports.signup = async (req, res) => {
@@ -42,14 +42,14 @@ exports.login = async (req, res) => {
     // Save refresh token
     user.refreshTokens.push({
       token: refreshToken,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days adjustable as needed
     });
     await user.save();
 
     // Set cookies
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production',// Use secure cookies in production
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -88,10 +88,13 @@ exports.switchAccount = async (req, res) => {
     const { newUserId } = req.body;
     const currentUser = req.user;
 
+    //we dont allow switching to the same account
+
     if (currentUser.id === newUserId) {
       return res.status(400).json({ message: 'Cannot switch to same account' });
     }
 
+    
     const newUser = await User.findById(newUserId);
     if (!newUser) return res.status(404).json({ message: 'User not found' });
 
