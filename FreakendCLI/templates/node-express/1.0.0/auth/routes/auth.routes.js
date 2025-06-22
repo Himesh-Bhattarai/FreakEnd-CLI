@@ -1,27 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const {
-  signup,
-  login,
-  logout,
-  switchAccount
+    signup,
+    login,
+    logout,
+    logoutAllDevices,
+    switchAccount,
+    refreshToken
 } = require('../controllers/auth.controller');
 const {
-  validateSignup,
-  validateLogin,
-  validateSwitchAccount
+    validateSignup,
+    validateLogin,
+    validateSwitchAccount
 } = require('../middleware/auth.middleware');
 const {
-  verifyAccessToken,
-  verifyRefreshToken
-} = require('../services/auth.service');
+    authenticateToken,
+    authenticateRefreshToken
+} = require('../middleware/jwt.token.middleware');
 
 // Public Routes
 router.post('/signup', validateSignup, signup);
 router.post('/login', validateLogin, login);
+router.post('/refresh-token', refreshToken);
 
-// Protected Routes
-router.post('/logout', verifyRefreshToken, logout);
-router.post('/switch-account', verifyAccessToken, validateSwitchAccount, switchAccount);
+// Protected Routes (require access token)
+router.post('/logout', authenticateToken, logout); // 👈 Added middleware here
+router.post('/logout-all', authenticateToken, logoutAllDevices);
+router.post('/switch-account', authenticateToken, validateSwitchAccount, switchAccount);
+
+// Health check route
+router.get('/health', (req, res) => {
+    res.json({ status: 'Auth service is running' });
+});
 
 module.exports = router;
