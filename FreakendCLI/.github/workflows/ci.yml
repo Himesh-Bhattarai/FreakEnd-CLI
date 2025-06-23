@@ -1,26 +1,38 @@
-name: CI
+name: 🧪 Run Tests (Jest)
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [20.x]
+
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Node
-        uses: actions/setup-node@v3
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install deps
+      - name: 📦 Install deps
         run: npm install
 
-      - name: Run Tests
-        run: npm run test
+      - name: 🧪 Run Jest tests
+        run: |
+          npm run test -- --ci --coverage
+
+      - name: 📤 Upload Coverage Report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
