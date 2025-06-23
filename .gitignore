@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+__test-temp__/
 
 # dependencies
 node_modules/
 
 
+__test-temp__

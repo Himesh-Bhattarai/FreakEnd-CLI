@@ -269,6 +269,7 @@ exports.switchAccount = async (req, res) => {
     });
   }
 };
+
 // Token refresh controller
 exports.refreshToken = async (req, res) => {
   try {

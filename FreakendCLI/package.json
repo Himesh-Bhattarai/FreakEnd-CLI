@@ -2,11 +2,11 @@
   "name": "freakend-cli",
   "version": "1.0.0",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "chalk": "^4.1.2",
     "commander": "^14.0.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "fs-extra": "^11.3.0",
     "mongoose": "^8.16.0"
   },
   "bin": {
@@ -19,11 +19,20 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "fs-extra": "^11.3.0",
+    "jest": "^30.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "supertest": "^7.1.1"
+  }
 }
