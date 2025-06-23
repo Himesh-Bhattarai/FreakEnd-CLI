@@ -28,45 +28,59 @@ function generateInitNodeExpress(targetDir) {
     createDir(path.join(targetDir, 'docs'));
 
     // Create files
-    writeFile(path.join(targetDir, 'server.js'), `
-const express = require('express');
-const mongoose = require('mongoose');
+    writeFile(path.join(targetDir, 'server.js'), `const express = require('express');
 const dotenv = require('dotenv');
+const signin = require('./routes/signin.routes');
+const connectDB = require('./config/db'); // Import the database connection
 
-
+// Load environment variables
 dotenv.config();
+
+// Initialize Express app
 const app = express();
+
+// Middleware
 app.use(express.json());
 
+// Routes
+app.use("/", signin);
 
+// Database connection and server start
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => app.listen(PORT, () => console.log('Server running')))
-    .catch(err => console.error(err));
+
+const startServer = async () => {
+    try {
+        await connectDB(); // Establish database connection
+        app.listen(PORT, () => {
+            // console.log(Server is running on port ${ PORT });
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
 `);
 
     writeFile(path.join(targetDir, '.env'), 'MONGO_URI=your-mongo-uri-here  // Replace with your actual MongoDB URI\nPORT=5000\n');
 
-    writeFile(path.join(targetDir, 'config', 'db.js'), `
-const mongoose = require('mongoose');
+    writeFile(path.join(targetDir, 'config', 'db.js'), `const mongoose = require('mongoose');
 require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI || " ", { // Use your MongoDB URI here
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-            socketTimeoutMS: 4500000 // Close sockets after 45m of inactivity
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000 // 45 seconds (not 45 minutes)
         });
         console.log('MongoDB connected successfully');
     } catch (err) {
         console.error('MongoDB connection error:', err.message);
-        process.exit(1); // Exit process with failure
+        process.exit(1);
     }
 };
 
-// Handle connection events
 mongoose.connection.on('connected', () => {
     console.log('Mongoose connected to DB');
 });
@@ -75,19 +89,12 @@ mongoose.connection.on('error', (err) => {
     console.error('Mongoose connection error:', err);
 });
 
-mongoose.connection.on('disconnected', () => {
-    console.log('Mongoose disconnected from DB');
-});
-
-// Graceful shutdown
 process.on('SIGINT', async () => {
     await mongoose.connection.close();
-    console.log('Mongoose connection closed due to app termination');
     process.exit(0);
 });
 
-module.exports = connectDB;
-`);
+module.exports = connectDB`);
 
     // writeFile(path.join(targetDir, 'routes'))
     // writeFile(path.join(targetDir, 'controllers'))

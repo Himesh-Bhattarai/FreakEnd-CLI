@@ -10,11 +10,12 @@
     "mongoose": "^8.16.0"
   },
   "bin": {
-    "fxp": "./bin/fxp.js"
+    "fxp": "bin/fxp.js"
   },
   "description": "",
   "main": "server.js",
   "directories": {
+    "doc": "docs",
     "lib": "lib"
   },
   "scripts": {

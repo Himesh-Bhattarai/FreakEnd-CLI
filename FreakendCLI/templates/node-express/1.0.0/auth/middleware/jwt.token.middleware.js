@@ -1,60 +1,99 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+const tokenService = require('../services/jwt.token.service');
+const User = require('../models/universal.User.model');
 
-const userSchema = new Schema({
-  // Core Identity
-  username: {
-    type: String,
-    trim: true,
-    required: false,// Optional for universal user model
-    minlength: 2,
-    maxlength: 50
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email']
-  },
+// Middleware to authenticate access token
+const authenticateToken = async (req, res, next) => {
+    try {
+        const token = req.cookies?.accessToken;
 
-  // Authentication
-  password: {
-    type: String,
-    required: true,
-    select: false
-  },
-  role: {
-    required: false, // Optional for universal user model
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
+        if (!token) {
+            return res.status(401).json({ message: 'Access token required' });
+        }
 
-  // Security Tokens
-  tokenVersion: {
-    type: Number,
-    default: 0  // Changed from string to number
-  },
-  refreshTokens: [{
-    token: String,
-    expires: Date,
-    createdByIp: String,  // ADD THIS
-    createdAt: Date       // ADD THIS
-  }],
+        // Verify the access token
+        const decoded = await tokenService.verifyAccessToken(token, req);
 
-  // Account Status
-  active: {
-    type: Boolean,
-    default: true
-  },
-  emailVerified: {
-    type: Boolean,
-    default: false
-  }
-}, { 
-  timestamps: true 
-});
+        // Get user info and attach to request
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
 
-module.exports = mongoose.model('User', userSchema);
+        req.user = {
+            id: user._id,
+            email: user.email,
+            username: user.username,
+            role: user.role
+        };
+
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid or expired access token' });
+    }
+};
+
+// Middleware to authenticate refresh token from cookies
+const authenticateRefreshToken = async (req, res, next) => {
+    try {
+        const { refreshToken } = req.cookies;
+
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token required' });
+        }
+
+        // Verify the refresh token
+        const decoded = await tokenService.verifyRefreshToken(refreshToken);
+
+        // Get user info and attach to request
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+        req.user = {
+            id: user._id,
+            email: user.email,
+            username: user.username,
+            role: user.role
+        };
+
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+};
+
+// Optional: Middleware for routes that work with or without authentication
+const optionalAuth = async (req, res, next) => {
+    try {
+        const cookieToken = req.cookies?.accessToken;
+        const authHeader = req.headers['authorization'];
+        const headerToken = authHeader && authHeader.split(' ')[1];
+
+        const token = cookieToken || headerToken;
+
+        if (token) {
+            const decoded = await tokenService.verifyAccessToken(token, req);
+            const user = await User.findById(decoded.id);
+
+            if (user) {
+                req.user = {
+                    id: user._id,
+                    email: user.email,
+                    username: user.username,
+                    role: user.role
+                };
+            }
+        }
+
+        next();
+    } catch (error) {
+        next();
+    }
+};
+
+module.exports = {
+    authenticateToken,
+    authenticateRefreshToken,
+    optionalAuth
+};
