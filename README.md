@@ -52,7 +52,7 @@ I don’t drop half-baked side projects.
 I build tools I actually use — and this one’s built for war.
 
 ---
-
+![GitHub Snake](https://github.com/Platane/snk/raw/output/github-contribution-grid-snake.svg)
 ## 📄 Docs
 
 - [License](./LICENSE)
