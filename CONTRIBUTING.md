@@ -13,7 +13,7 @@ Our CLI supports multiple frameworks and languages (Node.js, Python, etc.), and 
 ## FreakendCLI/
     ├── bin/                 ## CLI entry point
     ├── core/                ## Core logic: file generation, prompts, templates
-    ├── templates/           ## CLI feature templates by language/framework/version
+    ├── templates/           ## CLI feature templates by language/framework/    version
     │   ├── node-express/
     │   │   └── 1.0.0/
     │   │       └── login/   # Feature name
@@ -24,13 +24,13 @@ Our CLI supports multiple frameworks and languages (Node.js, Python, etc.), and 
     │   │           ├── middleware/
     │   │           └── generator.config.json
     │   ├── python-flask/
-│   │   └── 1.0.0/
-│   │       └── login/
-│   │           ├── controllers/
-│   │           ├── routes/
-│   │           ├── models/
-│   │           ├── services/
-│   │           └── generator.config.json
+    │   └── 1.0.0/
+    │       └── login/
+    │           ├── controllers/
+    │           ├── routes/
+    │           ├── models/
+    │           ├── services/
+    │           └── generator.config.json
     ├── __tests__/           # Feature tests (Jest, etc.)
     ├── .github/workflows/   # GitHub Actions CI
     ├── README.md
