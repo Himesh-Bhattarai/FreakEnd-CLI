@@ -49,7 +49,7 @@ Otherwise, just fork and keep it moving.
 ## 💬 Made by Mr. Chanchal
 
 I don’t drop half-baked side projects.  
-I build tools I actually use — and this one’s built for war.
+I build tools I actually use — and this one’s built for world war III.
 
 ---
 ![GitHub Snake](https://github.com/Platane/snk/raw/output/github-contribution-grid-snake.svg)
