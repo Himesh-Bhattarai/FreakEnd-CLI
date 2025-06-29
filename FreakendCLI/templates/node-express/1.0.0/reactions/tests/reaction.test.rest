@@ -1,0 +1,90 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUwN2YxZjc3YmNmODZjZDc5OTQzOTAxMSIsImlhdCI6MTY0MDk5NTIwMH0.example
+@contentId = 507f1f77bcf86cd799439021
+
+### 1. Add a new reaction (Like)
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "{{contentId}}",
+  "reactionType": "like"
+}
+
+### 2. Update existing reaction (Change to Heart)
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "{{contentId}}",
+  "reactionType": "❤️"
+}
+
+### 3. Add emoji reaction
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "{{contentId}}",
+  "reactionType": "🔥"
+}
+
+### 4. Get reaction stats for content
+GET {{baseUrl}}/reaction/{{contentId}}
+Authorization: Bearer {{token}}
+
+### 5. Remove user's reaction
+DELETE {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "{{contentId}}"
+}
+
+### 6. Get user's reactions (paginated)
+GET {{baseUrl}}/reaction/user/me?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### 7. Test validation - Invalid reaction type
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "{{contentId}}",
+  "reactionType": "invalid_reaction"
+}
+
+### 8. Test validation - Invalid content ID
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "invalid_id",
+  "reactionType": "like"
+}
+
+### 9. Test without authentication (should fail)
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+
+{
+  "contentId": "{{contentId}}",
+  "reactionType": "like"
+}
+
+### 10. Test rate limiting (run multiple times quickly)
+POST {{baseUrl}}/reaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "contentId": "507f1f77bcf86cd799439022",
+  "reactionType": "like"
+}
