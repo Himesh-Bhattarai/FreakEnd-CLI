@@ -1,0 +1,84 @@
+### Variables
+@baseUrl = http://localhost:3000
+@token = YOUR_JWT_TOKEN_HERE
+@postId = 507f1f77bcf86cd799439011
+@commentId = 507f1f77bcf86cd799439012
+@parentCommentId = 507f1f77bcf86cd799439013
+
+### Create a top-level comment
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "This is a great post! Thanks for sharing.",
+  "postId": "{{postId}}"
+}
+
+### Create a reply to a comment
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "I totally agree with your point!",
+  "postId": "{{postId}}",
+  "parentCommentId": "{{parentCommentId}}"
+}
+
+### Get all comments for a post
+GET {{baseUrl}}/comments/{{postId}}
+
+### Get comments with pagination
+GET {{baseUrl}}/comments/{{postId}}?page=1&limit=10&sort=newest
+
+### Get a single comment
+GET {{baseUrl}}/comments/single/{{commentId}}
+
+### Update a comment
+PUT {{baseUrl}}/comments/{{commentId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "Updated comment content with more details."
+}
+
+### Delete a comment
+DELETE {{baseUrl}}/comments/{{commentId}}
+Authorization: Bearer {{token}}
+
+### Get comment statistics
+GET {{baseUrl}}/comments/stats/{{postId}}
+
+### Test with invalid post ID
+GET {{baseUrl}}/comments/invalid-id
+
+### Test creating comment without auth
+POST {{baseUrl}}/comments
+Content-Type: application/json
+
+{
+  "content": "This should fail",
+  "postId": "{{postId}}"
+}
+
+### Test creating comment with empty content
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "",
+  "postId": "{{postId}}"
+}
+
+### Test creating comment with invalid post ID
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "Valid content",
+  "postId": "invalid-id"
+}
