@@ -1,0 +1,81 @@
+### Get Test Token
+GET http://localhost:3000/api/auth/test-token
+
+### API Info
+GET http://localhost:3000/api/info
+
+### Health Check
+GET http://localhost:3000/health
+
+### V1 API Tests
+
+### Get all users (V1) - URL versioning
+GET http://localhost:3000/api/v1/users
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get all users (V1) - Header versioning
+GET http://localhost:3000/api/users
+Authorization: Bearer YOUR_TOKEN_HERE
+x-api-version: v1
+
+### Get all users (V1) - Accept-Version header
+GET http://localhost:3000/api/users
+Authorization: Bearer YOUR_TOKEN_HERE
+Accept-Version: v1
+
+### Get user by ID (V1)
+GET http://localhost:3000/api/v1/users/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Create user (V1)
+POST http://localhost:3000/api/v1/users
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "New User",
+  "email": "newuser@example.com"
+}
+
+### V2 API Tests
+
+### Get all users (V2) - Enhanced with role and status
+GET http://localhost:3000/api/v2/users
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get user by ID (V2) - Enhanced with role and status
+GET http://localhost:3000/api/v2/users/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Create user (V2) - With role support
+POST http://localhost:3000/api/v2/users
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "New Admin User",
+  "email": "admin@example.com",
+  "role": "admin"
+}
+
+### Update user status (V2 specific feature)
+PATCH http://localhost:3000/api/v2/users/1/status
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "status": "inactive"
+}
+
+### Test Error Cases
+
+### Invalid version
+GET http://localhost:3000/api/v99/users
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Missing token
+GET http://localhost:3000/api/v1/users
+
+### Invalid token
+GET http://localhost:3000/api/v1/users
+Authorization: Bearer invalid_token_here
