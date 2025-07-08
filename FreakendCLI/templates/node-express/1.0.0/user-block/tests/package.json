@@ -1,0 +1,28 @@
+
+{
+    "name": "user-block-tests",
+    "version": "1.0.0",
+    "description": "Test suite for user-block feature",
+    "scripts": {
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:coverage": "jest --coverage",
+      "test:integration": "jest --testPathPattern=integration"
+    },
+    "devDependencies": {
+      "jest": "^29.0.0",
+      "supertest": "^6.3.0",
+      "mongodb-memory-server": "^8.0.0",
+      "@types/jest": "^29.0.0"
+    },
+    "jest": {
+      "testEnvironment": "node",
+      "setupFilesAfterEnv": ["<rootDir>/setup/test-setup.js"],
+      "collectCoverageFrom": [
+        "../**/*.js",
+        "!../node_modules/**",
+        "!../tests/**"
+      ],
+      "testTimeout": 30000
+    }
+  }
