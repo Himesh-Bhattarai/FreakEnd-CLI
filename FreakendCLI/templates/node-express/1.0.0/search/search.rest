@@ -1,0 +1,344 @@
+### Search API Examples
+
+# Get available search resources
+GET http://localhost:3000/search/resources
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search users with keyword
+GET http://localhost:3000/search/users?q=john&page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search users with filters
+GET http://localhost:3000/search/users?role=admin&department=Engineering&status=active
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search users with sorting
+GET http://localhost:3000/search/users?sort=name,-createdAt&page=1&limit=5
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search items with keyword and filters
+GET http://localhost:3000/search/items?q=laptop&category=Electronics&price_min=100&price_max=1000
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search posts with keyword
+GET http://localhost:3000/search/posts?q=technology&page=1&limit=20
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search posts with filters
+GET http://localhost:3000/search/posts?category=Technology&status=published&author=60a7c8f5e6b5a84d2c8f9a1b
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get search suggestions for users
+GET http://localhost:3000/search/users/suggestions?q=jo
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get search suggestions for items
+GET http://localhost:3000/search/items/suggestions?q=lap
+Authorization: Bearer {{authToken}}
+
+###
+
+# Admin search (all users regardless of status)
+GET http://localhost:3000/search/admin/users?status=inactive
+Authorization: Bearer {{adminToken}}
+
+###
+
+# Complex search with multiple filters
+GET http://localhost:3000/search/items?q=electronics&category=Electronics&tags=smartphone,tablet&sort=-price&page=1&limit=15
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search with date range (if supported)
+GET http://localhost:3000/search/posts?createdAt_min=2023-01-01&createdAt_max=2023-12-31
+Authorization: Bearer {{authToken}}
+
+###
+
+# Search with fuzzy matching
+GET http://localhost:3000/search/users?q=jhon&page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+###
+
+# Empty search (get all with pagination)
+GET http://localhost:3000/search/users?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Variables
+@authToken = your_jwt_token_here
+@adminToken = your_admin_jwt_token_here
+*/
+
+// ================== Integration Example ==================
+/*
+// app.js - Main application file integration example
+
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Database connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// Routes
+const searchRoutes = require('./search/routes/search.routes');
+
+// Mount search routes
+app.use('/search', searchRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+module.exports = app;
+*/
+
+// ================== CLI Integration Instructions ==================
+/*
+## Freakend CLI Integration
+
+### Installation
+1. Copy the entire `search` folder to your project's root directory
+2. Install required dependencies:
+   ```bash
+   npm install mongoose jsonwebtoken cors dotenv
+   ```
+
+### Configuration
+1. Add the following variables to your `.env` file:
+   ```
+   DEFAULT_SEARCH_LIMIT=10
+   MAX_SEARCH_LIMIT=100
+   SEARCH_FUZZY_THRESHOLD=0.6
+   SEARCH_CACHE_TTL=300
+   JWT_SECRET=your_jwt_secret_here
+   MONGODB_URI=mongodb://localhost:27017/your_database
+   ```
+
+### Usage
+1. Import and mount the search routes in your main app file:
+   ```javascript
+   const searchRoutes = require('./search/routes/search.routes');
+   app.use('/search', searchRoutes);
+   ```
+
+2. Ensure your user authentication middleware is compatible with the `authenticateToken` middleware
+
+### Testing
+Run the tests with:
+```bash
+npm test search/tests/search.test.js
+```
+
+### API Endpoints
+- `GET /search/resources` - Get available search resources
+- `GET /search/:resource` - Search specific resource
+- `GET /search/:resource/suggestions` - Get search suggestions
+- `GET /search/admin/:resource` - Admin-only search
+
+### Customization
+1. Add new models to `models/search.models.js`
+2. Update the `getSearchableFields` function in `utils/search.utils.js`
+3. Modify resource-specific filters in `services/search.services.js`
+4. Add new routes in `routes/search.routes.js`
+
+### Security Features
+- JWT authentication required for all routes
+- Role-based access control
+- Input validation and sanitization
+- Rate limiting
+- SQL injection prevention
+- XSS protection
+
+### Performance Optimizations
+- Database indexing for searchable fields
+- Efficient pagination
+- Query optimization
+- Caching support (can be extended with Redis)
+
+### Examples
+See the `search.rest` file for complete API usage examples with curl commands.
+*/
+  
+  return searchQuery;
+};
+
+/**
+ * Build sort object from sort string
+ * @param {string} sortString - Sort string (e.g., 'name,-createdAt')
+ * @returns {Object} MongoDB sort object
+ */
+const buildSortQuery = (sortString) => {
+  if (!sortString) return { createdAt: -1 }; // Default sort
+  
+  const sortObj = {};
+  const sortFields = sortString.split(',');
+  
+  sortFields.forEach(field => {
+    const trimmedField = field.trim();
+    if (trimmedField.startsWith('-')) {
+      sortObj[trimmedField.substring(1)] = -1;
+    } else {
+      sortObj[trimmedField] = 1;
+    }
+  });
+  
+  return sortObj;
+};
+
+/**
+ * Validate and sanitize search parameters
+ * @param {Object} params - Request query parameters
+ * @returns {Object} Sanitized parameters
+ */
+const sanitizeSearchParams = (params) => {
+  const {
+    q = '',
+    page = 1,
+    limit = process.env.DEFAULT_SEARCH_LIMIT || 10,
+    sort = 'createdAt',
+    ...filters
+  } = params;
+  
+  // Sanitize page and limit
+  const sanitizedPage = Math.max(1, parseInt(page) || 1);
+  const sanitizedLimit = Math.min(
+    parseInt(limit) || 10,
+    parseInt(process.env.MAX_SEARCH_LIMIT) || 100
+  );
+  
+  // Sanitize query string
+  const sanitizedQuery = q.toString().trim().substring(0, 200); // Limit query length
+  
+  // Sanitize sort
+  const sanitizedSort = sort.toString().trim();
+  
+  // Sanitize filters (remove potentially dangerous operators)
+  const sanitizedFilters = {};
+  Object.keys(filters).forEach(key => {
+    if (typeof filters[key] === 'string') {
+      sanitizedFilters[key] = filters[key].trim();
+    } else if (typeof filters[key] === 'number') {
+      sanitizedFilters[key] = filters[key];
+    } else if (Array.isArray(filters[key])) {
+      sanitizedFilters[key] = filters[key].filter(item => 
+        typeof item === 'string' || typeof item === 'number'
+      );
+    }
+  });
+  
+  return {
+    query: sanitizedQuery,
+    page: sanitizedPage,
+    limit: sanitizedLimit,
+    sort: sanitizedSort,
+    filters: sanitizedFilters
+  };
+};
+
+/**
+ * Calculate pagination metadata
+ * @param {number} total - Total count
+ * @param {number} page - Current page
+ * @param {number} limit - Items per page
+ * @returns {Object} Pagination metadata
+ */
+const calculatePagination = (total, page, limit) => {
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+  
+  return {
+    currentPage: page,
+    totalPages,
+    totalItems: total,
+    itemsPerPage: limit,
+    hasNextPage,
+    hasPrevPage,
+    nextPage: hasNextPage ? page + 1 : null,
+    prevPage: hasPrevPage ? page - 1 : null
+  };
+};
+
+/**
+ * Get searchable fields for a model
+ * @param {string} modelName - Name of the model
+ * @returns {Array} Array of searchable fields
+ */
+const getSearchableFields = (modelName) => {
+  const fieldsMap = {
+    User: ['name', 'email', 'department'],
+    Item: ['title', 'description', 'tags'],
+    Post: ['title', 'content', 'tags']
+  };
+  
+  return fieldsMap[modelName] || [];
+};
+
+/**
+ * Validate ObjectId
+ * @param {string} id - ID to validate
+ * @returns {boolean} Whether ID is valid
+ */
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
+module.exports = {
+  buildSearchQuery,
+  buildSortQuery,
+  sanitizeSearchParams,
+  calculatePagination,
+  getSearchableFields,
+  isValidObjectId
+};
