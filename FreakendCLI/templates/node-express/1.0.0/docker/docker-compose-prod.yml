@@ -1,0 +1,133 @@
+version: '3.8'
+
+# Production overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  app:
+    restart: always
+    environment:
+      - NODE_ENV=production
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Production logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Remove development volumes
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+      - ./logs:/usr/src/app/logs
+      # Remove source code volume for production
+    # Security enhancements
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /usr/src/app/tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+
+  mongodb:
+    restart: always
+    # Production MongoDB configuration
+    command: [
+      "--auth",
+      "--oplogSize", "128",
+      "--replSet", "rs0",
+      "--keyFile", "/etc/mongodb-keyfile",
+      "--bind_ip_all"
+    ]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    # Production logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Security configurations
+    security_opt:
+      - no-new-privileges:true
+
+# Production-specific volumes with backup considerations
+volumes:
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/docker/volumes/mongodb_data
+  mongodb_config:
+    driver: local
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/docker/volumes/redis_data
+
+# Production network configuration
+networks:
+  freakend-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: freakend-br0
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Security configurations
+    security_opt:
+      - no-new-privileges:true
+    
+  redis:
+    restart: always
+    # Production Redis configuration
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--appendfsync", "everysec",
+      "--auto-aof-rewrite-percentage", "100",
+      "--auto-aof-rewrite-min-size", "64mb"
+    ]
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Production logging
+    logging:
+      driver: "json-file"
