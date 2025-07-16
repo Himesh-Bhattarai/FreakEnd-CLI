@@ -1,0 +1,119 @@
+### Freakend API Tests
+### Use these tests to verify your Dockerized application is working correctly
+
+### 1. Health Check
+GET http://localhost:3000/health
+Accept: application/json
+
+### 2. API Status
+GET http://localhost:3000/api/status
+Accept: application/json
+
+### 3. User Registration
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123",
+  "confirmPassword": "password123"
+}
+
+### 4. User Login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### 5. Get User Profile (requires JWT token from login)
+GET http://localhost:3000/api/users/profile
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 6. Update User Profile (requires JWT token)
+PUT http://localhost:3000/api/users/profile
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "username": "updateduser",
+  "email": "updated@example.com"
+}
+
+### 7. Get All Users (admin only)
+GET http://localhost:3000/api/users
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 8. Password Reset Request
+POST http://localhost:3000/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### 9. File Upload (if multer is configured)
+POST http://localhost:3000/api/upload
+Content-Type: multipart/form-data
+
+# Add file upload here using your REST client
+
+### 10. Logout
+POST http://localhost:3000/api/auth/logout
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 11. Test Database Connection
+GET http://localhost:3000/api/debug/db-status
+Accept: application/json
+
+### 12. Test Redis Connection (if using Redis)
+GET http://localhost:3000/api/debug/redis-status
+Accept: application/json
+
+### 13. Test Email Service (if configured)
+POST http://localhost:3000/api/debug/test-email
+Content-Type: application/json
+
+{
+  "to": "test@example.com",
+  "subject": "Test Email",
+  "text": "This is a test email from Freakend"
+}
+
+### 14. Rate Limit Test (make multiple requests quickly)
+GET http://localhost:3000/api/test-rate-limit
+Accept: application/json
+
+### 15. Error Handling Test
+GET http://localhost:3000/api/test-error
+Accept: application/json
+
+### 16. CORS Test (from different origin)
+GET http://localhost:3000/api/cors-test
+Accept: application/json
+Origin: http://localhost:3001
+
+### 17. JWT Token Validation Test
+GET http://localhost:3000/api/validate-token
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 18. Search Users (with pagination)
+GET http://localhost:3000/api/users/search?q=test&page=1&limit=10
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 19. User Activity Log
+GET http://localhost:3000/api/users/activity
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 20. Application Metrics
+GET http://localhost:3000/api/metrics
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
