@@ -1,7 +1,6 @@
 const tokenService = require('../services/jwt.token.service');
 const User = require('../models/universal.User.model');
 
-// Middleware to authenticate access token
 const authenticateToken = async (req, res, next) => {
     try {
         const token = req.cookies?.accessToken;
@@ -10,27 +9,32 @@ const authenticateToken = async (req, res, next) => {
             return res.status(401).json({ message: 'Access token required' });
         }
 
-        // Verify the access token
         const decoded = await tokenService.verifyAccessToken(token, req);
+        req.user = decoded;
+        console.log('Access token:', token);
+        console.log('Decoded user from token:', decoded);
 
-        // Get user info and attach to request
+
         const user = await User.findById(decoded.id);
         if (!user) {
             return res.status(401).json({ message: 'User not found' });
         }
 
         req.user = {
-            id: user._id,
+            id: user._id.toString(), // always better to stringify
             email: user.email,
             username: user.username,
             role: user.role
         };
+
+        req.token = token; 
 
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Invalid or expired access token' });
     }
 };
+
 
 // Middleware to authenticate refresh token from cookies
 const authenticateRefreshToken = async (req, res, next) => {
