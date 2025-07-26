@@ -2,6 +2,7 @@ const User = require('../models/universal.User.model');
 const tokenService = require('../services/jwt.token.service');
 const bcrypt = require('bcrypt');
 
+
 // Signup Controller
 exports.signup = async (req, res) => {
   try {
@@ -98,175 +99,155 @@ exports.login = async (req, res) => {
 
 // Logout Controller
 exports.logout = async (req, res) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+  };
+
   try {
     const { refreshToken } = req.cookies;
-
-    // Security: Always clear cookies regardless of token validity
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/'
-    };
 
     res.clearCookie('accessToken', cookieOptions);
     res.clearCookie('refreshToken', cookieOptions);
 
-    // If no refresh token provided, user is already logged out
+
     if (!refreshToken) {
+      console.log('No refresh token found');
       return res.status(200).json({
         success: true,
-        message: 'Already logged out'
+        message: 'Already logged out or no session active.',
       });
     }
 
-    // Validate and remove the refresh token
     try {
-      await tokenService.verifyRefreshToken(refreshToken);
+      console.log('Verifying refresh token...');
+      const decoded = await tokenService.verifyRefreshToken(refreshToken);
+      console.log('Refresh token decoded:', decoded);
+
       await tokenService.removeRefreshToken(refreshToken);
-    } catch (error) {
-      // Token is invalid/expired - log but don't fail logout
+      console.log('Refresh token removed');
+    } catch (err) {
+      console.warn('Refresh token invalid or already removed:', err.message);
     }
 
-    // Always return success for logout (security best practice)
     return res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully.',
     });
-
   } catch (error) {
-    // Even on server error, clear cookies and return success
-    res.clearCookie('accessToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/'
-    });
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/'
-    });
+    console.error('Logout error:', error);
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
 
     return res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out with fallback. Session forcibly ended.',
     });
   }
 };
 
-// Logout All Devices Controller
+//Logout all devices for a user
 exports.logoutAllDevices = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log('Logging out all devices for user:', userId);
 
-    // Increment token version to invalidate all tokens
-    await User.findByIdAndUpdate(
-      userId,
-      {
-        $inc: { tokenVersion: 1 },
-        $set: { refreshTokens: [] }
-      },
-      { new: true }
-    );
+    // Just remove the refreshTokens update for now if it's unnecessary
+    const updatedUser = await User.findById(userId);
+
+    // Make sure tokenVersion is a number before incrementing
+    if (typeof updatedUser.tokenVersion !== 'number') {
+      updatedUser.tokenVersion = 0;
+    }
+
+    updatedUser.tokenVersion += 1;
+    updatedUser.refreshTokens = []; // optional
+
+    await updatedUser.save();
+
+    console.log('Updated tokenVersion:', updatedUser.tokenVersion);
 
     res.clearCookie('accessToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'strict',
+      path: '/',
     });
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'strict',
+      path: '/',
     });
 
-    res.json({ success: true, message: 'Logged out from all devices' });
+    return res.json({ success: true, message: 'Logged out from all devices' });
   } catch (error) {
-    res.status(500).json({ message: 'Logout failed' });
+    console.error('Logout all devices error:', error);
+    return res.status(500).json({ message: 'Logout failed', error: error.message });
   }
 };
-// Switch Account Controller
+
 exports.switchAccount = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const currentUser = req.user;
+    const currentUserId = req.user?.id;
+    const { email, username } = req.body;
 
-    // Input validation
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
-      });
+    console.log("User trying to switch from ID:", currentUserId);
+    console.log("Switch target email:", email);
+    console.log("Switch target username:", username);
+
+    if (!email || !username) {
+      return res.status(400).json({ message: "Email and username are required" });
     }
 
-    // Find the target user
-    const targetUser = await User.findOne({ email: email.toLowerCase() });
+    // Find the target user to switch to
+    const targetUser = await User.findOne({
+      email: email.toLowerCase(),
+      username
+    });
+
     if (!targetUser) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      console.log("Switch target user NOT found");
+      return res.status(404).json({ message: "User to switch not found" });
     }
 
-    // Prevent switching to same account
-    if (currentUser.id === targetUser._id.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot switch to the same account'
-      });
-    }
-
-    // Verify password for target account
-    const isValidPassword = await bcrypt.compare(password, targetUser.password);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials for target account'
-      });
-    }
-
-    // Optional: Check if user has permission to switch
-    // You can implement business logic here
-    const canSwitchTo = await checkSwitchPermission(currentUser.id, targetUser._id);
-    if (!canSwitchTo) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to switch to this account'
-      });
-    }
-
-    // Get current token from request
-    const currentToken = req.token; // This should be set by your authenticateToken middleware
-
-    // Remove current user's token
-    await Token.deleteOne({ accessToken: currentToken });
+    // OPTIONAL: Add permission checks here if you want to restrict switching
 
     // Generate new tokens for target user
-    const { accessToken, refreshToken } = await tokenService.generateTokens(targetUser, req);
+    const tokens = await tokenService.generateTokens(targetUser, req);
 
-    // Return tokens in response (better for API testing)
-    res.json({
+    // Set cookies with new tokens
+    res.cookie("accessToken", tokens.access.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie("refreshToken", tokens.refresh.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    console.log(`Switched to user: ${targetUser.username}`);
+
+    return res.json({
       success: true,
-      message: 'Account switched successfully',
+      message: `Switched to ${targetUser.username}`,
       user: {
         id: targetUser._id,
         email: targetUser.email,
         username: targetUser.username,
-        name: targetUser.name
       },
-      accessToken,
-      refreshToken
     });
-
   } catch (error) {
-    console.error('Switch account error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Account switch failed'
-    });
+    console.error("Switch account error:", error);
+    return res.status(500).json({ message: "Account switch failed" });
   }
 };
 
@@ -321,6 +302,7 @@ exports.refreshToken = async (req, res) => {
     res.status(401).json({ message: 'Token refresh failed' });
   }
 };
+
 
 // Helper function to check switch permissions
 async function checkSwitchPermission(currentUserId, targetUserId) {

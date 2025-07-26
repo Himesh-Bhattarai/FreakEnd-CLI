@@ -1,7 +1,8 @@
+
 // Signup Validation
 exports.validateSignup = (req, res, next) => {
   const { username, email, password } = req.body;
-  
+
   if (!username || !email || !password) {
     return res.status(400).json({ message: 'All fields are required' });
   }
@@ -24,7 +25,7 @@ exports.validateSignup = (req, res, next) => {
 // Login Validation
 exports.validateLogin = (req, res, next) => {
   const { email, password } = req.body;
-  
+
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
@@ -37,9 +38,15 @@ exports.validateLogin = (req, res, next) => {
 };
 
 // Switch Account Validation
+// Middleware validation example (optional)
+// middleware/auth.middleware.js
 exports.validateSwitchAccount = (req, res, next) => {
-  if (!req.body.newUserId) {
-    return res.status(400).json({ message: 'New user ID is required' });
+  const { newUserId, email, username } = req.body;
+
+  if (!newUserId && !(email && username)) {
+    return res.status(400).json({
+      message: 'Either newUserId or both email and username are required to switch account'
+    });
   }
   next();
 };

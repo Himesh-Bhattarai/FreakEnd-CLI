@@ -3,10 +3,10 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   // Core Identity
-  name: {
+  username: {
     type: String,
     trim: true,
-    required: false,// Optional for universal user model
+    required: true,// Optional for universal user model
     minlength: 2,
     maxlength: 50
   },
@@ -33,13 +33,16 @@ const userSchema = new Schema({
   },
 
   // Security Tokens
-  refreshTokens: [{
-    token: String,
-    expires: Date
-  }],
+  refreshTokens: [
+    {
+      token: String,
+      expires: Date
+    }
+  ],
+
   tokenVersion: {
-    type: String,
-    default: () => require('crypto').randomBytes(16).toString('hex')
+    type: Number,
+    default: 0
   },
 
   // Account Status
